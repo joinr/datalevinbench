@@ -1,0 +1,8 @@
+{:paths ["src"]
+ :deps {datalevin {:local/root ".."}
+        org.lmdbjava/lmdbjava {:mvn/version "0.8.1"}
+        com.taoensso/nippy {:mvn/version "2.14.0"}
+        datascript {:mvn/version "1.0.0"}
+        io.replikativ/datahike {:mvn/version "0.3.1"}
+        }
+ :jvm-opts ["-Xmx4g"]}
