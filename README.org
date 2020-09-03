@@ -1,0 +1,16 @@
+* benchmark forked from datalevin
+- extended to include datahike
+- munged the core bench stuff to work on local windows setup
+- benchmark code should be equivalent (just adapted for API nuances)
+
+* Invocation
+Designed to be run from clojure cli.  Assuming you have that installed
+and the `clojure` or `clj` command available:
+
+clj -m bench
+
+Invokes a somewhat lengthy processing of all the libs and query benchmarks.
+There should be support similar to the original for passing in specific
+libs to test, right now all versions are "latest" and really only
+resolve to what's in the deps.edn; so there's a difference in that
+respect.
