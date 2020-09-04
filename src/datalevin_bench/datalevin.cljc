@@ -109,14 +109,12 @@
      (d/init-db "/tmp/datalevin-bench-init" datoms))
     (delete-database  "/tmp/datalevin-bench-init")))
 
-
 (defn ^:export retract-5 []
   (let [db   (d/db-with (new-db "/tmp/datalevin-bench-retract" schema)
                         core/people20k)
         eids (->> (d/datoms db :aevt :name) (map :e) (shuffle))]
     (core/bench-once
       (reduce (fn [db eid] (d/db-with db [[:db.fn/retractEntity eid]])) db eids))))
-
 
 (defn ^:export q1 []
   (core/bench
