@@ -23,6 +23,7 @@ Median run times in ms (per extant benchmarking infrastructure):
 
 *** JDK 
 - openjdk version "1.8.0_222"
+
 - OpenJDK Runtime Environment (AdoptOpenJDK)(build 1.8.0_222-b10)
 - OpenJDK 64-Bit Server VM (AdoptOpenJDK)(build 25.222-b10, mixed mode)
 - 4gb Xmx
@@ -30,7 +31,28 @@ Median run times in ms (per extant benchmarking infrastructure):
 *** Hardware
 - Dell XPS 15 9550
 
-*** Results
+*** Results (Fresh DB)
+
+If we run the bench for the first time, we get good performance. On windows the
+/tmp/ path will just populate a database at c:\tmp\blah\ .  The database
+file is about 100mb.
+
+
+| version              |   q1 |   q2 |   q3 |   q4 | qpred1 | qpred2 |
+|----------------------+------+------+------+------+--------+--------|
+| latest-datascript    |  2.7 |  6.4 |  9.3 | 14.8 |    8.4 |   31.4 |
+| latest-datalevin     | 0.79 |  3.5 |  4.6 |  6.7 |    8.1 |    9.6 |
+| latest-datahike-mem  | 10.6 | 22.7 | 35.4 | 48.9 |   24.4 |   46.4 |
+| latest-datahike-file | 11.3 | 23.2 | 35.3 | 49.4 |   24.0 |   46.0 |
+
+*** Results (Degenerate)
+
+In the original version of the benchmark, we don't clean up this resource, so
+datalevin will re-use the existing database every time, which can lead to
+growing the database (lots of new random entries) from a 20K person db to far
+more, leading to a deceptive benchmark.  By the time this was pointed
+out, I had run the benchmark many times, which ultimately led to a 1.3gb
+database file.  That explains the performance differential!
 
 | version              |   q1 |   q2 |   q3 |   q4 | qpred1 | qpred2 |
 |----------------------+------+------+------+------+--------+--------|
@@ -65,4 +87,8 @@ Median run times in ms (per extant benchmarking infrastructure):
 | latest-datahike-mem  | 16.6 | 34.5 | 53.5 | 74.9 |   33.2 |   58.1 |
 | latest-datahike-file | 16.1 | 34.1 | 53.8 | 72.4 |   33.0 |   58.0 |
 
-This implies a likely pecularity with lmdb on Windows 10.
+* TODO
+Ensure resource cleanup on windows for datalevin, since it will
+reuse the database (of course).  Datahike and datascript didn't
+experience this since they cleaned up / deleted their databases
+as part of the original benchmark.

@@ -1,12 +1,33 @@
 (ns datalevin-bench.datalevin
   (:require
     [datalevin.core :as d]
-    [datalevin-bench.core :as core]))
+    [datalevin-bench.core :as core]
+    [clojure.java.io :as io]))
 
 
 #?(:cljs
    (enable-console-print!))
 
+
+(defn exists? [path]
+  (.exists (io/file path)))
+
+(defn delete-file-recursively
+  "Delete file f. If it's a directory, recursively delete all its contents.
+   Raise an exception if any deletion fails unless silently is true."
+  [f & [silently]]
+  (let [f (io/file f)]
+    (if (.isDirectory f)
+      (doseq [child (.listFiles f)]
+        (delete-file-recursively child silently)))
+    (io/delete-file f silently)))
+
+(defn delete-database [path]
+  (when (exists? path) (delete-file-recursively path)))
+
+(defn new-db [path schema]
+  (delete-database path)
+  (d/empty-db path schema))
 
 (def schema
   {:follows   {:db/valueType   :db.type/ref
@@ -45,9 +66,8 @@
            {:db/id   to
             :name    "Ivan"}]))))
 
-
 (def db100k
-  (d/db-with (d/empty-db "/tmp/datalevin-bench-query" schema)
+  (d/db-with (new-db "/tmp/datalevin-bench-query" schema)
              core/people20k))
 
 
@@ -61,20 +81,20 @@
           (d/db-with [[:db/add (:db/id p) :sex       (:sex p)]])
           (d/db-with [[:db/add (:db/id p) :age       (:age p)]])
           (d/db-with [[:db/add (:db/id p) :salary    (:salary p)]])))
-      (d/empty-db "/tmp/datalevin-bench-add-1" schema)
+      (new-db "/tmp/datalevin-bench-add-1" schema)
       core/people20k)))
 
 
 (defn ^:export add-5 []
   (core/bench-once
    (reduce (fn [db p] (d/db-with db [p]))
-           (d/empty-db "/tmp/datalevin-bench-add-5" schema)
+           (new-db "/tmp/datalevin-bench-add-5" schema)
            core/people20k)))
 
 
 (defn ^:export add-all []
   (core/bench-once
-   (d/db-with (d/empty-db "/tmp/datalevin-bench-add-all" schema)
+   (d/db-with (new-db "/tmp/datalevin-bench-add-all" schema)
               core/people20k)))
 
 
@@ -86,11 +106,12 @@
                        :when (not= k :db/id)]
                    (d/datom id k v)))]
     (core/bench-once
-      (d/init-db "/tmp/datalevin-bench-init" datoms))))
+     (d/init-db "/tmp/datalevin-bench-init" datoms))
+    (delete-database  "/tmp/datalevin-bench-init")))
 
 
 (defn ^:export retract-5 []
-  (let [db   (d/db-with (d/empty-db "/tmp/datalevin-bench-retract" schema)
+  (let [db   (d/db-with (new-db "/tmp/datalevin-bench-retract" schema)
                         core/people20k)
         eids (->> (d/datoms db :aevt :name) (map :e) (shuffle))]
     (core/bench-once
